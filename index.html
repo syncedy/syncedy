@@ -197,6 +197,7 @@ textarea { min-height: 84px; resize: vertical; }
 
 .authbox { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: grid; place-items: center; padding: 16px; overflow: auto; }
 .authcard { width: min(420px, 100%); display: grid; gap: 12px; }
+.authmsg { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--warn-soft); color: var(--warn); font-weight: 600; font-size: 14px; }
 /* Toast */
 .toast { position: fixed; z-index: 40; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 14px; font-weight: 600; box-shadow: 0 8px 24px rgb(20 33 61 / .3); max-width: calc(100% - 32px); animation: pop .3s ease-out; }
 @keyframes pop { from { transform: translate(-50%, 12px); opacity: 0; } }
@@ -508,28 +509,28 @@ function sbAuthScreen() {
     const box = document.createElement('div'); box.className = 'authbox'; document.body.appendChild(box);
     let mode = 'in';
     const done = v => { box.remove(); resolve(v); };
-    const draw = msg => {
+    const draw = (msg, keep) => {
       box.innerHTML = `<form class="panel authcard" id="authform">
         <div class="brand">${document.querySelector('.brand').innerHTML}</div>
         <h2>${mode === 'in' ? 'Bentornato' : 'Crea il tuo account'}</h2>
         <p class="sub" style="margin:0">${mode === 'in' ? 'Entra per ritrovare piano, appunti e classe.' : "Ti servono solo un'email e una password. Il resto lo scegli dopo."}</p>
-        <label class="field"><span>Email</span><input type="email" id="au-mail" autocomplete="email" required></label>
+        <label class="field"><span>Email</span><input type="email" id="au-mail" autocomplete="email" value="${esc(keep || '')}" required></label>
         <label class="field"><span>Password (almeno 6 caratteri)</span><input type="password" id="au-pass" autocomplete="${mode === 'in' ? 'current-password' : 'new-password'}" minlength="6" required></label>
-        <p class="note" id="au-msg" role="alert" style="margin:0">${msg ? esc(msg) : ''}</p>
+        ${msg ? `<p class="authmsg" id="au-msg" role="alert">${esc(msg)}</p>` : '<p id="au-msg" role="alert" hidden></p>'}
         <button class="btn primary big" type="submit">${mode === 'in' ? 'Entra' : 'Registrati'}</button>
         <button type="button" class="btn ghost" id="au-sw">${mode === 'in' ? 'Non hai un account? Registrati' : 'Hai già un account? Entra'}</button>
         <button type="button" class="btn ghost small" id="au-skip">Continua senza account (solo su questo dispositivo)</button></form>`;
       $('au-sw').onclick = () => { mode = mode === 'in' ? 'up' : 'in'; draw(''); };
       $('au-skip').onclick = () => done(null);
       $('authform').onsubmit = async ev => {
-        ev.preventDefault(); const email = $('au-mail').value.trim(), password = $('au-pass').value, btn = box.querySelector('button[type=submit]'); btn.disabled = true;
+        ev.preventDefault(); const email = $('au-mail').value.trim(), password = $('au-pass').value, btn = box.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Un attimo…';
         try {
           const r = mode === 'in' ? await sb.auth.signInWithPassword({ email, password }) : await sb.auth.signUp({ email, password });
           if (r.error) { const m = String(r.error.message || '').toLowerCase();
-            draw(m.includes('invalid login') ? 'Email o password non corrette.' : m.includes('already') ? 'Questa email è già registrata: prova a entrare.' : m.includes('rate') ? 'Troppi tentativi: riprova tra poco.' : m.includes('password') ? 'La password è troppo debole: usa almeno 6 caratteri.' : 'Non è andata: controlla i dati e riprova.'); return; }
+            draw(m.includes('not confirmed') ? "Devi prima confermare l'email: apri il messaggio che ti abbiamo mandato (controlla anche lo spam)." : m.includes('invalid login') ? 'Email o password non corrette. Se non hai ancora un account, premi "Non hai un account? Registrati".' : m.includes('already') ? 'Questa email è già registrata: prova a entrare.' : m.includes('rate') || m.includes('seconds') ? 'Troppi tentativi: aspetta un minuto e riprova.' : m.includes('disabled') || m.includes('not allowed') ? 'Le registrazioni con email sono disattivate nel progetto.' : m.includes('password') ? 'La password è troppo debole: usa almeno 6 caratteri.' : 'Non è andata: ' + r.error.message, email); return; }
           if (r.data && r.data.session) return done(r.data.session);
-          mode = 'in'; draw("Ti abbiamo scritto: conferma l'email e poi entra.");
-        } catch (e) { draw('Non riesco a collegarmi: riprova tra poco.'); }
+          mode = 'in'; draw("Account creato. Ti abbiamo mandato un'email di conferma: aprila, poi torna qui e premi Entra.", email);
+        } catch (e) { draw('Non riesco a collegarmi: controlla la connessione e riprova.', email); }
       };
     };
     draw('');
