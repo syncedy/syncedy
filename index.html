@@ -1100,10 +1100,10 @@ function viewPassaportoBase() {
         ${g ? `<span class="note">Ottenuto il ${parseISO(st.stamps[s.id]).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}</span>` : pr ? `<div class="prog" style="width:100%;--c:var(--accent)"><i style="width:${pr[0] / pr[1] * 100}%"></i></div><span class="note mono">${pr[0]} / ${pr[1]}</span>` : '<span class="note">Da sbloccare</span>'}</div>`; }).join('')}</div>`;
 }
 
-const PLUS = { m: 'Plus mensile · 3,99 €', y: 'Plus annuale · 29 € (2,42 € al mese)', s: 'Pass sessione · 9,99 € per 3 mesi', no: 'Per ora non lo userei' };
+const PLUS = { m: 'Plus mensile · 5,99 €', y: 'Plus annuale · 48 € (4 € al mese)', s: 'Pass sessione · 13,99 € per 3 mesi', no: 'Per ora non lo userei' };
 function plusPanel() {
   return `<section class="panel"><h3>Piano Plus: tu cosa sceglieresti?</h3>
-    <p class="sub" style="margin:6px 0 10px">Per ora è tutto gratis. Stiamo capendo cosa far pagare in futuro (tipo Edy senza limiti e PDF più grandi). Non ti addebitiamo niente: la tua risposta ci serve per fissare un prezzo onesto.</p>
+    <p class="sub" style="margin:6px 0 10px">Per ora è tutto gratis. Stiamo capendo cosa far pagare in futuro (tipo Edy senza limiti e PDF più grandi), con 10 giorni di prova gratis. Non ti addebitiamo niente: la tua risposta ci serve per fissare un prezzo onesto.</p>
     <div class="chips" role="group" aria-label="Cosa sceglieresti">${Object.entries(PLUS).map(([k, v]) => `<button class="btn small ${st.plus === k ? 'primary' : ''}" data-act="plusPick" data-v="${k}">${v}</button>`).join('')}</div>
     ${st.plus ? `<p class="note" style="margin:10px 0 0">Hai scelto: ${esc(PLUS[st.plus])}. Puoi cambiare idea.</p>` : ''}</section>`;
 }
